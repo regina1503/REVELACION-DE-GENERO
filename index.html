@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Revelación de Género</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body {
+    height:100%;
+    width:100%;
+    overflow:hidden;
+    background:#000;
+    font-family: 'Segoe UI', sans-serif;
+  }
+  .video-container {
+    position:relative;
+    height:100vh;
+    width:100vw;
+    overflow:hidden;
+  }
+  #bgVideo {
+    position:absolute;
+    top:50%;
+    left:50%;
+    min-width:100%;
+    min-height:100%;
+    width:auto;
+    height:auto;
+    transform:translate(-50%,-50%);
+    object-fit:cover;
+  }
+  .seek-controls {
+    position:absolute;
+    bottom:150px;
+    left:50%;
+    transform:translateX(-50%);
+    display:flex;
+    gap:18px;
+    z-index:10;
+  }
+  .seek-btn {
+    background:rgba(0,0,0,0.5);
+    color:#fff;
+    border:none;
+    border-radius:50%;
+    width:50px;
+    height:50px;
+    font-size:20px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .seek-btn:active {
+    background:rgba(0,0,0,0.75);
+  }
+  .location-btn {
+    position:absolute;
+    left:50%;
+    bottom:60px;
+    transform:translateX(-50%) translateY(20px);
+    background:linear-gradient(135deg, #ff6fa5, #6fc7ff);
+    color:#fff;
+    text-decoration:none;
+    font-weight:600;
+    font-size:16px;
+    padding:14px 28px;
+    border-radius:50px;
+    box-shadow:0 6px 20px rgba(0,0,0,0.35);
+    display:flex;
+    align-items:center;
+    gap:8px;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.5s ease, transform 0.5s ease;
+    z-index:10;
+  }
+  .location-btn.show {
+    opacity:1;
+    pointer-events:auto;
+    transform:translateX(-50%) translateY(0);
+  }
+  .location-btn svg {
+    width:18px;
+    height:18px;
+    fill:#fff;
+  }
+  .play-overlay {
+    position:absolute;
+    inset:0;
+    background:rgba(0,0,0,0.6);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:20;
+    cursor:pointer;
+  }
+  .play-overlay.hidden { display:none; }
+  .play-btn {
+    width:80px;
+    height:80px;
+    border-radius:50%;
+    background:rgba(255,255,255,0.9);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:32px;
+    color:#333;
+  }
+</style>
+</head>
+<body>
+
+<div class="video-container">
+  <video id="bgVideo" playsinline loop preload="auto">
+    <source src="https://raw.githubusercontent.com/regina1503/REVELACION-DE-GENERO/main/REVELACION%20DE%20GENERO.mp4" type="video/mp4">
+    Tu navegador no soporta video HTML5.
+  </video>
+
+  <div class="seek-controls">
+    <button class="seek-btn" id="rewindBtn" title="Retroceder 5s">⏪</button>
+    <button class="seek-btn" id="forwardBtn" title="Adelantar 5s">⏩</button>
+  </div>
+
+  <a href="https://www.google.com/maps?q=20.6134878,-100.3249092&z=17&hl=es"
+     target="_blank"
+     rel="noopener"
+     class="location-btn"
+     id="locationBtn">
+    <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
+    Ver ubicación
+  </a>
+
+  <div class="play-overlay" id="playOverlay">
+    <div class="play-btn">▶</div>
+  </div>
+</div>
+
+<script>
+  const video = document.getElementById('bgVideo');
+  const locationBtn = document.getElementById('locationBtn');
+  const playOverlay = document.getElementById('playOverlay');
+  const rewindBtn = document.getElementById('rewindBtn');
+  const forwardBtn = document.getElementById('forwardBtn');
+
+  // Rango en el que se muestra el botón de ubicación
+  const SHOW_START = 19;
+  const SHOW_END = 25;
+
+  video.addEventListener('timeupdate', () => {
+    if (video.currentTime >= SHOW_START && video.currentTime <= SHOW_END) {
+      locationBtn.classList.add('show');
+    } else {
+      locationBtn.classList.remove('show');
+    }
+  });
+
+  // El overlay siempre pide un tap: así el video arranca con audio directo
+  // (los navegadores solo permiten audio si el usuario interactuó primero)
+  playOverlay.addEventListener('click', () => {
+    video.muted = false;
+    video.play();
+    playOverlay.classList.add('hidden');
+  });
+
+  rewindBtn.addEventListener('click', () => {
+    video.currentTime = Math.max(0, video.currentTime - 5);
+  });
+
+  forwardBtn.addEventListener('click', () => {
+    video.currentTime = Math.min(video.duration || Infinity, video.currentTime + 5);
+  });
+</script>
+
+</body>
+</html>
