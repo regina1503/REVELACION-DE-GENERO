@@ -72,12 +72,13 @@
     text-decoration:none;
     font-weight:600;
     font-size:16px;
-    padding:14px 28px;
+    padding:14px 36px;
     border-radius:50px;
     box-shadow:0 6px 20px rgba(0,0,0,0.35);
     display:flex;
     align-items:center;
     gap:8px;
+    white-space:nowrap;
     opacity:0;
     pointer-events:none;
     transition:opacity 0.5s ease, transform 0.5s ease;
@@ -92,6 +93,30 @@
     width:18px;
     height:18px;
     fill:#fff;
+  }
+  .center-btn {
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    width:80px;
+    height:80px;
+    border-radius:50%;
+    background:rgba(0,0,0,0.5);
+    color:#fff;
+    border:none;
+    font-size:32px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:15;
+    opacity:1;
+    transition:opacity 0.3s ease;
+  }
+  .center-btn.hidden {
+    opacity:0;
+    pointer-events:none;
   }
   .play-overlay {
     position:absolute;
@@ -125,6 +150,8 @@
     Tu navegador no soporta video HTML5.
   </video>
 
+  <button class="center-btn hidden" id="playPauseBtn" title="Pausar/Reproducir">⏸</button>
+
   <div class="progress-container">
     <div class="progress-bar" id="progressBar">
       <div class="progress-fill" id="progressFill"></div>
@@ -151,6 +178,7 @@
   const playOverlay = document.getElementById('playOverlay');
   const progressBar = document.getElementById('progressBar');
   const progressFill = document.getElementById('progressFill');
+  const playPauseBtn = document.getElementById('playPauseBtn');
 
   // Rango en el que se muestra el botón de ubicación
   const SHOW_START = 19;
@@ -175,6 +203,7 @@
     video.muted = false;
     video.play();
     playOverlay.classList.add('hidden');
+    hideCenterBtnIfPlaying();
   });
 
   function seekFromEvent(e) {
@@ -188,6 +217,67 @@
 
   progressBar.addEventListener('click', seekFromEvent);
   progressBar.addEventListener('touchstart', seekFromEvent);
+
+  // Botón central de pausa/reproducción
+  let userPaused = false;
+  let hideTimeout = null;
+
+  function showCenterBtn() {
+    playPauseBtn.classList.remove('hidden');
+    playPauseBtn.textContent = video.paused ? '▶' : '⏸';
+  }
+
+  function hideCenterBtnIfPlaying() {
+    clearTimeout(hideTimeout);
+    if (!video.paused) {
+      hideTimeout = setTimeout(() => {
+        playPauseBtn.classList.add('hidden');
+      }, 800);
+    }
+  }
+
+  playPauseBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (video.paused) {
+      video.play();
+      userPaused = false;
+      showCenterBtn();
+      hideCenterBtnIfPlaying();
+    } else {
+      video.pause();
+      userPaused = true;
+      showCenterBtn();
+    }
+  });
+
+  // Tocar la pantalla (fuera de los controles) muestra el botón de nuevo
+  document.querySelector('.video-container').addEventListener('click', (e) => {
+    if (e.target === playPauseBtn || e.target.closest('#progressBar') || e.target.closest('.location-btn') || e.target.closest('.play-overlay')) {
+      return;
+    }
+    showCenterBtn();
+    hideCenterBtnIfPlaying();
+  });
+
+  // Evitar que el video se pause al abrir el link de ubicación:
+  // si el navegador lo pausa por perder el foco (al abrir Maps en otra
+  // pestaña/app), lo reanudamos automáticamente al volver, a menos que
+  // el usuario lo haya pausado manualmente.
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && video.paused && !userPaused) {
+      video.play();
+      hideCenterBtnIfPlaying();
+    }
+  });
+
+  locationBtn.addEventListener('click', () => {
+    // No pausar el video al abrir el mapa
+    setTimeout(() => {
+      if (video.paused && !userPaused) {
+        video.play();
+      }
+    }, 300);
+  });
 </script>
 
 </body>
