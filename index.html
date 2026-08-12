@@ -19,48 +19,48 @@
     overflow:hidden;
     background:#000;
     font-family: 'Segoe UI', sans-serif;
+    display:flex;
+    align-items:center;
+    justify-content:center;
   }
   .video-container {
     position:relative;
     height:100vh;
     width:100vw;
+    max-width:calc(100vh * 9 / 16);
     overflow:hidden;
+    background:#000;
   }
   #bgVideo {
     position:absolute;
-    top:50%;
-    left:50%;
-    min-width:100%;
-    min-height:100%;
-    width:auto;
-    height:auto;
-    transform:translate(-50%,-50%);
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
     object-fit:cover;
   }
-  .seek-controls {
+  .progress-container {
     position:absolute;
-    bottom:150px;
+    bottom:40px;
     left:50%;
     transform:translateX(-50%);
-    display:flex;
-    gap:18px;
+    width:80%;
     z-index:10;
   }
-  .seek-btn {
-    background:rgba(0,0,0,0.5);
-    color:#fff;
-    border:none;
-    border-radius:50%;
-    width:50px;
-    height:50px;
-    font-size:20px;
+  .progress-bar {
+    width:100%;
+    height:6px;
+    background:rgba(255,255,255,0.3);
+    border-radius:10px;
     cursor:pointer;
-    display:flex;
-    align-items:center;
-    justify-content:center;
+    position:relative;
   }
-  .seek-btn:active {
-    background:rgba(0,0,0,0.75);
+  .progress-fill {
+    height:100%;
+    width:0%;
+    background:linear-gradient(135deg, #ff6fa5, #6fc7ff);
+    border-radius:10px;
+    pointer-events:none;
   }
   .location-btn {
     position:absolute;
@@ -125,9 +125,10 @@
     Tu navegador no soporta video HTML5.
   </video>
 
-  <div class="seek-controls">
-    <button class="seek-btn" id="rewindBtn" title="Retroceder 5s">⏪</button>
-    <button class="seek-btn" id="forwardBtn" title="Adelantar 5s">⏩</button>
+  <div class="progress-container">
+    <div class="progress-bar" id="progressBar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
   </div>
 
   <a href="https://www.google.com/maps?q=20.6134878,-100.3249092&z=17&hl=es"
@@ -148,8 +149,8 @@
   const video = document.getElementById('bgVideo');
   const locationBtn = document.getElementById('locationBtn');
   const playOverlay = document.getElementById('playOverlay');
-  const rewindBtn = document.getElementById('rewindBtn');
-  const forwardBtn = document.getElementById('forwardBtn');
+  const progressBar = document.getElementById('progressBar');
+  const progressFill = document.getElementById('progressFill');
 
   // Rango en el que se muestra el botón de ubicación
   const SHOW_START = 19;
@@ -161,6 +162,11 @@
     } else {
       locationBtn.classList.remove('show');
     }
+
+    if (video.duration) {
+      const pct = (video.currentTime / video.duration) * 100;
+      progressFill.style.width = pct + '%';
+    }
   });
 
   // El overlay siempre pide un tap: así el video arranca con audio directo
@@ -171,13 +177,17 @@
     playOverlay.classList.add('hidden');
   });
 
-  rewindBtn.addEventListener('click', () => {
-    video.currentTime = Math.max(0, video.currentTime - 5);
-  });
+  function seekFromEvent(e) {
+    const rect = progressBar.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const ratio = Math.min(Math.max((clientX - rect.left) / rect.width, 0), 1);
+    if (video.duration) {
+      video.currentTime = ratio * video.duration;
+    }
+  }
 
-  forwardBtn.addEventListener('click', () => {
-    video.currentTime = Math.min(video.duration || Infinity, video.currentTime + 5);
-  });
+  progressBar.addEventListener('click', seekFromEvent);
+  progressBar.addEventListener('touchstart', seekFromEvent);
 </script>
 
 </body>
